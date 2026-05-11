@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { from, map, Observable, of, pipe } from 'rxjs';
+import { from, map, Observable, of } from 'rxjs';
 import { SpotifyApi, Album, SearchResults } from '@spotify/web-api-ts-sdk';
 
 import { PAGE_SIZE } from '../../constants/config';
@@ -27,21 +27,17 @@ export class SpotifyService {
   search(name: string): Observable<BasicAlbumInfo[]> {
     if (!name) return of([]);
     this.lastQuery = name;
-    const results: Observable<BasicAlbumInfo[]> = from(this.sdk.search(name, ["album"])).pipe(
-      this.formatAlbum()
-    );
+    const results: Observable<BasicAlbumInfo[]> = this.changeToBasicAlbumInfoObservable(this.sdk.search(name, ["album"]))
     return results;
   }
 
   getPage(pageNumber: number): Observable<BasicAlbumInfo[]> {
     const offset = (pageNumber - 1) * PAGE_SIZE;
-    return from(this.sdk.search(this.lastQuery, ["album"], undefined, PAGE_SIZE, offset)).pipe(
-      this.formatAlbum()
-    );
+    return this.changeToBasicAlbumInfoObservable(this.sdk.search(this.lastQuery, ["album"], undefined, PAGE_SIZE, offset));
   }
 
-  private formatAlbum() {
-    return pipe(
+  private changeToBasicAlbumInfoObservable(source: Promise<SearchResults<["album"]>>): Observable<BasicAlbumInfo[]> {
+    return from(source).pipe(
       map((response: SearchResults<["album"]>) => response.albums?.items || []),
       map((albums) => albums.map(album => ({ name: album.name, id: album.id, releaseDate: album.release_date, image: album.images[0]?.url || '' })))
     )
