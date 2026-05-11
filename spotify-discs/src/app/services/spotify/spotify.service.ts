@@ -26,7 +26,6 @@ export class SpotifyService {
 
   search(name: string): Observable<BasicAlbumInfo[]> {
     if (!name) return of([]);
-    this.sdk.search(name, ["album"])
     this.lastQuery = name;
     const results: Observable<BasicAlbumInfo[]> = from(this.sdk.search(name, ["album"])).pipe(
       this.formatAlbum()
