@@ -1,0 +1,14 @@
+.home-page-discs-placeholder {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    app-disc-item:not(:last-child) {
+        border-bottom: 1px solid gray;
+    }
+}
+
+mat-spinner {
+    place-self: center;
+    vertical-align: middle;
+}

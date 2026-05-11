@@ -1,0 +1,63 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+
+    <!-- Email -->
+    <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+
+        <input matInput type="email" formControlName="email">
+
+        @if (form.controls['email'].hasError('required')) {
+        <mat-error>Email is required</mat-error>
+        }
+
+        @if (form.controls['email'].hasError('pattern')) {
+        <mat-error>Invalid email format</mat-error>
+        }
+    </mat-form-field>
+
+    <br><br>
+
+    <!-- Username -->
+    <mat-form-field appearance="outline">
+        <mat-label>Username</mat-label>
+
+        <input matInput formControlName="username">
+
+        @if (form.controls['username'].hasError('required')) {
+        <mat-error>Username is required</mat-error>
+        }
+
+        @if (form.controls['username'].hasError('pattern')) {
+        <mat-error>
+            Only English letters and numbers, cannot start with a number
+        </mat-error>
+        }
+    </mat-form-field>
+
+    <br><br>
+
+    <!-- Password -->
+    <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+
+        <input matInput type="password" formControlName="password">
+
+        @if (form.controls['password'].hasError('required')) {
+        <mat-error>Password is required</mat-error>
+        }
+
+        @if (form.controls['password'].hasError('pattern')) {
+        <mat-error>
+            Must contain 1 uppercase letter, 1 number, and no spaces
+        </mat-error>
+        }
+    </mat-form-field>
+
+    <br><br>
+
+    <button mat-raised-button type="submit" [disabled]="form.invalid">
+
+        Submit
+    </button>
+
+</form>

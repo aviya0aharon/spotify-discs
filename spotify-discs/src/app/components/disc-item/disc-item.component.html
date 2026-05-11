@@ -1,0 +1,15 @@
+<div class="disc-item-main-div" [routerLink]="['/disc-information', disc().name]"
+    [queryParams]="{ title: disc().name, id: disc().id }">
+
+    <img [src]="disc().image" width="100">
+
+    <h3>
+        {{ disc().name }}
+    </h3>
+
+    <p>
+        Release:
+        {{ disc().releaseDate | date }}
+    </p>
+
+</div>
