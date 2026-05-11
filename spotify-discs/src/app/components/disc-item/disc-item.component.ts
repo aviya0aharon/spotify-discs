@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Component, input, InputSignal } from '@angular/core';
 
-import { basicAlbumInfo } from '../../types/basic-album-info.type';
+import { BasicAlbumInfo } from '../../types/basic-album-info.type';
 
 @Component({
   selector: 'app-disc-item',
@@ -16,5 +16,5 @@ import { basicAlbumInfo } from '../../types/basic-album-info.type';
 })
 export class DiscItemComponent {
 
-  public disc: InputSignal<basicAlbumInfo> = input<basicAlbumInfo>({} as basicAlbumInfo);
+  public disc: InputSignal<BasicAlbumInfo> = input.required<BasicAlbumInfo>();
 }

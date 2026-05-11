@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { UserService } from '../../services/user/user.service';
 
@@ -19,10 +19,14 @@ import { UserService } from '../../services/user/user.service';
   styleUrl: './user-registration.page.scss'
 })
 export class UserRegistrationPage {
-  form!: FormGroup;
+  public form: FormGroup<{
+    email: FormControl<string>;
+    username: FormControl<string>;
+    password: FormControl<string>
+  }>;
 
   constructor(private fb: FormBuilder, private userService: UserService) {
-    this.form = this.fb.group({
+    this.form = this.fb.nonNullable.group({
       email: [
         '',
         [
@@ -51,9 +55,11 @@ export class UserRegistrationPage {
 
   submit() {
     if (this.form.valid) {
-      this.userService.register(this.form.value.username).then(() => {
+      this.userService.register(this.form.value.username!).then(() => {
         alert('Registration successful!');
       }).catch(err => {
+        console.error('Error registering user:', err);
+
         alert('Registration failed: ' + err.message);
       });
     }

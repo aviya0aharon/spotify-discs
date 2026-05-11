@@ -1,4 +1,4 @@
-export type basicAlbumInfo = {
+export type BasicAlbumInfo = {
     name: string;
     id: string;
     releaseDate: string;

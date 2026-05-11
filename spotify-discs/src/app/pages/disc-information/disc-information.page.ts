@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, signal, WritableSignal } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { catchError, of, tap } from 'rxjs';
 import { Album } from '@spotify/web-api-ts-sdk';
 
 import { PageState } from '../../enums/page-state.enum';
@@ -16,30 +17,33 @@ import { SpotifyService } from '../../services/spotify/spotify.service';
   templateUrl: './disc-information.page.html',
   styleUrl: './disc-information.page.scss'
 })
-export class DiscInformationPage implements OnInit {
-  public disc: WritableSignal<Album> = signal({} as Album);
+export class DiscInformationPage {
+  public disc: WritableSignal<Album | null> = signal(null);
   public loadingState: WritableSignal<PageState> = signal(PageState.Loading);
   public PageState = PageState;
 
   constructor(
     private route: ActivatedRoute,
-    private discsService: SpotifyService
+    private spotifyService: SpotifyService
   ) { }
 
   async ngOnInit() {
     const id = this.route.snapshot.queryParams['id'];
 
     if (id !== undefined && id !== null) {
-      this.discsService.getByID(id).then(disc => {
+      this.spotifyService.getByID(id).pipe(
+        tap(() => this.loadingState.set(PageState.Loaded)),
+        tap((disc: Album) => this.disc.set(disc)),
+        catchError(err => {
+          console.error('Error fetching album information:', err);
+          this.loadingState.set(PageState.Error);
+          return of(null);
+        })
+      ).subscribe();
 
-        if (disc) {
-          this.loadingState.set(PageState.Loaded);
-          this.disc.set(disc);
-        }
-      }).catch(err => {
-        this.loadingState.set(PageState.Error);
-      });
     } else {
+      console.error('No album ID was found');
+
       this.loadingState.set(PageState.Error);
     }
   }

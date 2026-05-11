@@ -14,14 +14,14 @@
 <hr>
 @switch (loadingState()) {
 @case (PageState.Loaded) {
-@if (discs().length>0) {
+@if (hasResults()) {
 <div class="home-page-discs-placeholder">
     @for (disc of discs(); track disc.id) {
     <app-disc-item [disc]="disc"></app-disc-item>
     }
 </div>
 <p>
-    <button (click)="previous()" [disabled]="pageNumber() === 1">Previous</button>
+    <button (click)="previous()" [disabled]="hasPrevDisabled()">Previous</button>
     <button (click)="next()">Next</button>
 </p>
 }

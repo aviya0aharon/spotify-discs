@@ -1,10 +1,12 @@
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Component, signal, WritableSignal, effect, untracked } from '@angular/core';
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
+import { Component, computed, signal, WritableSignal } from '@angular/core';
+
+import { catchError, of, tap } from 'rxjs';
 
 import { PageState } from '../../enums/page-state.enum';
-import { basicAlbumInfo } from '../../types/basic-album-info.type';
+import { BasicAlbumInfo } from '../../types/basic-album-info.type';
 import { SpotifyService } from '../../services/spotify/spotify.service';
 import { DiscItemComponent } from '../../components/disc-item/disc-item.component';
 import { LocalStorageService } from '../../services/local-storage/local-storage.service';
@@ -22,15 +24,16 @@ import { LocalStorageService } from '../../services/local-storage/local-storage.
   styleUrl: './home.page.scss'
 })
 export class HomePage {
-  readonly AlbumInPage = 5;
   public query: WritableSignal<string> = signal('');
-  public discs: WritableSignal<basicAlbumInfo[]> = signal([]);
+  public discs: WritableSignal<BasicAlbumInfo[]> = signal([]);
   public lastQueries: WritableSignal<string[]> = signal([]);
   public loadingState: WritableSignal<PageState> = signal(PageState.Loaded);
-  public pageNumber: WritableSignal<number> = signal(1);
+  private pageNumber: WritableSignal<number> = signal(1);
+  public readonly hasPrevDisabled = computed(() => this.pageNumber() === 1);
+  public readonly hasResults = computed(() => this.discs().length > 0);
   public PageState = PageState;
 
-  constructor(private discsService: SpotifyService, private localStorageService: LocalStorageService) {
+  constructor(private readonly spotifyService: SpotifyService, private readonly localStorageService: LocalStorageService) {
     this.loadQueries();
   }
 
@@ -43,32 +46,35 @@ export class HomePage {
 
     this.saveQuery(query);
     this.pageNumber.set(1);
-    this.fetchSearch(query, 1);
-
-  }
-
-  fetchSearch(query: string, page: number) {
     this.loadingState.set(PageState.Loading);
 
-    this.discsService.search(query, (page - 1) * this.AlbumInPage)
-      .then((response: basicAlbumInfo[]) => {
-        this.loadingState.set(PageState.Loaded);
-        this.discs.set(response);
-      }).catch(err => {
+    this.spotifyService.search(query).pipe(
+      tap(() => this.loadingState.set(PageState.Loaded)),
+      tap((response: BasicAlbumInfo[]) => this.discs.set(response)),
+      catchError(err => {
         this.loadingState.set(PageState.Error);
-
         console.error('Error searching for albums:', err);
-      });
+        return of([]);
+      })
+    ).subscribe();
   }
 
-  saveQuery(query: string) {
+  next() {
+    this.changePage(1);
+  }
+
+  previous() {
+    this.changePage(-1);
+  }
+
+
+  private saveQuery(query: string) {
     if (this.lastQueries().includes(query)) {
       return;
     }
 
-    let lastQueries: string[] = this.lastQueries();
-    lastQueries.unshift(query);
-    lastQueries = lastQueries.slice(0, 5);
+    const lastQueries = [query, ...this.lastQueries()]
+      .slice(0, 5);
 
     this.lastQueries.set(lastQueries);
 
@@ -79,12 +85,16 @@ export class HomePage {
     }
   }
 
-  loadQueries() {
+  private loadQueries() {
     try {
       const data: string | null = this.localStorageService.get('lastQueries');
 
       if (data !== null && data !== undefined) {
-        this.lastQueries.set(JSON.parse(data));
+        const parsed = JSON.parse(data);
+
+        if (Array.isArray(parsed)) {
+          this.lastQueries.set(parsed);
+        }
       }
     } catch (error) {
       console.error('Error loading queries from localStorage:', error);
@@ -92,28 +102,22 @@ export class HomePage {
     }
   }
 
-  next() {
-    const query = this.query().trim();
-    if (query === '') {
-      return;
-    }
+  private changePage(offset: number) {
+    const newPage = this.pageNumber() + offset;
 
-    const newPageNumber = this.pageNumber() + 1;
-    this.fetchSearch(this.query(), newPageNumber);
-    this.pageNumber.set(newPageNumber);
-  }
+    if (newPage < 1) return;
 
-  previous() {
-    const query = this.query().trim();
+    this.loadingState.set(PageState.Loading);
 
-    if (query === '') {
-      return;
-    }
-
-    if (this.pageNumber() > 1) {
-      const newPageNumber = this.pageNumber() - 1;
-      this.fetchSearch(this.query(), newPageNumber);
-      this.pageNumber.set(newPageNumber);
-    }
+    this.spotifyService.getPage(newPage).pipe(
+      tap((response: BasicAlbumInfo[]) => this.discs.set(response)),
+      tap(() => this.loadingState.set(PageState.Loaded)),
+      tap(() => this.pageNumber.set(newPage)),
+      catchError(err => {
+        this.loadingState.set(PageState.Error);
+        console.error('Error fetching page:', err);
+        return of([]);
+      })
+    ).subscribe();
   }
 }
