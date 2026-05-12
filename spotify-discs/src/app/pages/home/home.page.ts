@@ -64,7 +64,6 @@ export class HomePage {
       tap(() => this.loadingState.set(PageState.Loading)),
       map(([pageNumber, query]) => ({ pageNumber, query })),
       switchMap(({ pageNumber, query }) => this.spotifyService.search(query, pageNumber).pipe(
-        tap((response: SpotifySearchResults) => console.log(response.isLastPage)),
         tap((response: SpotifySearchResults) => this.isLastPage.set(response.isLastPage)),
         map((response: SpotifySearchResults) => response.albums),
         tap((response: BasicAlbumInfo[]) => this.discs.set(response)),
