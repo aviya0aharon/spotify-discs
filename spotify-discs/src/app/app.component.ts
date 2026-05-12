@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 
 import { HeaderComponent } from "./layout/header/header.component";
 
-
 @Component({
   selector: 'app-root',
   standalone: true,
