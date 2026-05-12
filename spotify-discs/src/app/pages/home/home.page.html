@@ -7,9 +7,6 @@
         {{query}}
     </option>}
 </datalist>
-<button (click)="search()">
-    Search
-</button>
 
 <hr>
 @switch (loadingState()) {
@@ -22,7 +19,7 @@
 </div>
 <p>
     <button (click)="previous()" [disabled]="hasPrevDisabled()">Previous</button>
-    <button (click)="next()">Next</button>
+    <button (click)="next()" [disabled]="isLastPage()">Next</button>
 </p>
 }
 }
